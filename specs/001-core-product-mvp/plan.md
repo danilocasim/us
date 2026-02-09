@@ -1,106 +1,156 @@
 # Implementation Plan: Us Core Product MVP
 
-**Branch**: `001-core-product-mvp` | **Date**: 2026-02-09 | **Spec**: [spec.md](./spec.md)
+**Branch**: `001-core-product-mvp` | **Date**: 2025-02-09 | **Spec**: [spec.md](./spec.md)
 **Input**: Feature specification from `/specs/001-core-product-mvp/spec.md`
+
+**Note**: This template is filled in by the `/speckit.plan` command. See `.specify/templates/commands/plan.md` for the execution workflow.
 
 ## Summary
 
-Build a private, one-to-one relationship space where two consenting users can share intentional notes/letters, propose events, express preferences, and curate photo memories. The backend is a Node.js/Express API with Prisma ORM and PostgreSQL for durable storage. The frontend is a React Native mobile app styled with NativeWind (Tailwind for RN). Push notifications are delivered via Expo Notifications. The system enforces mutual consent, note permanence, privacy-by-default, and zero engagement exploitation at every layer.
+Build a private, one-to-one digital relationship space enabling two people to share notes, events, preferences, photos, and memories with mutual consent as the foundational trust contract. The MVP prioritizes intentional interaction over engagement, permanence over editability, and emotional safety over virality. Core technical approach uses modern web technologies with mobile-first design, end-to-end encryption for privacy, and strict access controls ensuring content isolation per relationship space.
 
 ## Technical Context
 
-**Language/Version**: TypeScript 5.x (both frontend and backend)
-**Primary Dependencies**:
-- Backend: Node.js 20 LTS, Express 4.x, Prisma 5.x, bcrypt, jsonwebtoken, multer, expo-server-sdk
-- Frontend: React Native 0.76+, Expo SDK 52+, NativeWind 4.x, React Navigation 7.x, Expo Notifications, Expo Image Picker, AsyncStorage
-**Storage**: PostgreSQL 16 (primary), S3-compatible object store (photos)
-**Testing**: Jest + Supertest (backend), Jest + React Native Testing Library (frontend)
-**Target Platform**: iOS 15+ and Android 12+ (via React Native/Expo); API on Linux server
-**Project Type**: Mobile + API (frontend + backend)
-**Performance Goals**: API responses <500ms p95 for all endpoints; push notification delivery <30s from trigger event
-**Constraints**: Offline-capable drafts (local-first with sync); photo uploads capped at 10MB per image; zero user content loss
-**Scale/Scope**: Initial target 1,000 relationship spaces; ~10 screens in mobile app
+**Language/Version**: Node.js 20 LTS (backend), TypeScript 5+ (full stack), React 18 (web), React Native 0.73 (mobile)  
+**Primary Dependencies**: NestJS (backend API), Next.js 14 (web), Expo SDK 50 (mobile), Prisma (ORM), @noble/ciphers (encryption)  
+**Storage**: PostgreSQL 15+ (relational data for users, spaces, notes, events) + S3-compatible object storage (Cloudflare R2 for photos/memories)  
+**Testing**: Vitest (unit/integration), Playwright (E2E web), React Native Testing Library (mobile), Supertest (API contracts)  
+**Target Platform**: Mobile-first (iOS 15+ & Android 10+ via React Native/Expo) + Web companion (Next.js SSR)  
+**Project Type**: Mobile + Web + API (monorepo with api/, mobile/, web/ directories)  
+**Performance Goals**: <500ms API response time p95, <2s photo upload for 5MB compressed images, 60fps UI interactions  
+**Constraints**: Offline-capable (drafts in AsyncStorage/IndexedDB), <100MB memory footprint mobile, client-side E2E encryption (ChaCha20-Poly1305), zero data loss tolerance (WAL archiving + daily backups)  
+**Scale/Scope**: MVP target 1k-10k users, ~15 core screens (onboarding, space creation, notes, events, preferences, memories), ~28 REST API endpoints
 
 ## Constitution Check
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-| # | Principle | Gate Question | Status |
-|---|-----------|---------------|--------|
-| I | Purpose & Scope | Does the feature enable one-to-one meaningful connection without maximizing engagement or becoming social? | PASS — all features serve a single private space between two people |
-| II | Trust & Consent | Does the feature require explicit consent and protect privacy, data ownership, and emotional safety? | PASS — invitation requires explicit acceptance; space requires mutual consent |
-| III | Privacy & Ownership | Is data treated as belonging to the relationship? No public discovery, no indexing, no sharing without user action? | PASS — all content scoped to relationship space; full export available; no public endpoints |
-| IV | Intentional Design | Does the feature encourage thoughtfulness? Is friction used to protect meaning? | PASS — note permanence enforced; memory curation encouraged; no real-time chat |
-| V | Simplicity & Restraint | Does every feature justify its existence with emotional value? No surface area without depth? | PASS — 6 user stories, each with clear human narrative and emotional purpose |
-| VI | Scalability Without Dehumanization | No dark patterns, engagement loops, or attention harvesting? | PASS — notifications are restrained; no streaks/gamification; FR-019 enforced |
-| VII | Maintainability & Longevity | Clarity over cleverness? Stability over novelty? Additive changes? | PASS — standard well-supported stack; Prisma migrations; TypeScript for clarity |
-| VIII | Accountability & Governance | Decisions documented, reversible where possible, understandable? | PASS — plan artifacts document all decisions; Prisma migrations are reversible |
-| IX | Ethical Boundaries | No monetization of vulnerability? No surveillance of intimacy? | PASS — analytics measure system health only (FR-028); no behavioral tracking |
-| X | Evolution & Adaptation | Changes preserve purpose, are explicit and reasoned? | PASS — constitution governance enforced via plan template gates |
+### Article I: Purpose & Scope ✅
+- **Requirement**: Support one private relationship per space with mutual consent
+- **Status**: COMPLIANT — Feature spec enforces exactly one space per user pair (FR-002), requires explicit consent from both parties (FR-001)
+- **Evidence**: User Story 1 acceptance scenario #5 prevents multiple spaces
 
-**Gate result**: ALL PASS — no violations. Complexity Tracking section not required.
+### Article II: Trust & Consent ✅
+- **Requirement**: No relationship space without explicit approval from both parties
+- **Status**: COMPLIANT — Invitation system requires explicit acceptance (FR-001), single-use secure links with expiration (FR-030)
+- **Evidence**: User Story 1 scenarios #1-3 enforce consent workflow
+
+### Article III: Privacy & Ownership ✅
+- **Requirement**: Data belongs to relationship, not platform; privacy by default
+- **Status**: COMPLIANT — Content isolated per space (FR-022), no public indexing (FR-023), independent export rights (FR-029)
+- **Evidence**: User Story 1 scenario #4 denies third-party access; FR-024 treats content as relationship-owned
+
+### Article IV: Intentional Design ✅
+- **Requirement**: Encourage thoughtful actions; respect permanence
+- **Status**: COMPLIANT — Notes are immutable after delivery (FR-006), memories require individual curation (FR-017)
+- **Evidence**: User Story 2 scenario #2 enforces permanence; User Story 5 scenario #4 adds friction to bulk uploads
+
+### Article V: Simplicity & Restraint ✅
+- **Requirement**: Features must justify emotional value and complexity
+- **Status**: COMPLIANT — Each user story has explicit "Why this priority" rationale; scope limited to 5 core features
+- **Evidence**: User stories 1-5 each provide justification; preferences (Story 4) require no response obligation (FR-012)
+
+### Article VI: Scalability Without Dehumanization ✅
+- **Requirement**: No dark patterns, engagement loops, or attention harvesting
+- **Status**: COMPLIANT — Explicit prohibition in FR-019, FR-027; notifications only for meaningful events (FR-018)
+- **Evidence**: User Story 6 scenarios #3-4 prevent engagement patterns; SC-005 requires 100% care-justified notifications
+
+### Article VII: Maintainability & Longevity ✅
+- **Requirement**: Favor clarity, stability, maintainability; additive change only
+- **Status**: COMPLIANT — Spec includes migration paths (account deletion → archive, FR-003); preserves drafts offline (FR-025)
+- **Evidence**: Edge case handling for partner departure maintains data access; constitution versioning in place
+
+### Article VIII: Accountability & Governance ✅
+- **Requirement**: Document decisions; take responsibility for consequences
+- **Status**: COMPLIANT — All technology choices documented in research.md with rationale and alternatives considered
+- **Evidence**: Research document sections 1-10 provide explicit decision documentation; agent context updated with finalized stack
+
+### Article IX: Ethical Boundaries ✅
+- **Requirement**: No exploitation of emotion; analytics measure system health only
+- **Status**: COMPLIANT — FR-027 prohibits monetizing vulnerability; FR-028 restricts analytics to system health
+- **Evidence**: User Story 3 scenario #3 uses no pressure language for declines
+
+### Article X: Evolution & Adaptation ✅
+- **Requirement**: Purpose overrides trend; changes preserve original intent
+- **Status**: COMPLIANT — Feature scope tied to product purpose; no viral or social features
+- **Evidence**: Boundaries section (FR-026) explicitly prohibits relationship comparison features
+
+### Gate Decision: **PASSED — READY FOR PHASE 2** ✅
+**Status**: All constitution checks passed. Technical context resolved. Design artifacts complete.
+**Next Step**: Generate tasks.md via `/speckit.tasks` command to create implementation task breakdown.
+**Re-check Completed**: Technology choices align with Article VII (maintainability via TypeScript + established frameworks) and Article VIII (all decisions documented with rationale).
 
 ## Project Structure
 
 ### Documentation (this feature)
 
 ```text
-specs/001-core-product-mvp/
-├── plan.md              # This file
-├── research.md          # Phase 0 output
-├── data-model.md        # Phase 1 output
-├── quickstart.md        # Phase 1 output
-├── contracts/           # Phase 1 output
-│   └── api.md           # REST API contract
-└── tasks.md             # Phase 2 output (/speckit.tasks command)
+specs/[###-feature]/
+├── plan.md              # This file (/speckit.plan command output)
+├── research.md          # Phase 0 output (/speckit.plan command)
+├── data-model.md        # Phase 1 output (/speckit.plan command)
+├── quickstart.md        # Phase 1 output (/speckit.plan command)
+├── contracts/           # Phase 1 output (/speckit.plan command)
+└── tasks.md             # Phase 2 output (/speckit.tasks command - NOT created by /speckit.plan)
 ```
 
 ### Source Code (repository root)
 
 ```text
-backend/
+# Mobile + Web + API Architecture
+api/
 ├── src/
-│   ├── config/          # Database, auth, storage, notification config
-│   ├── middleware/       # Auth, error handling, rate limiting, upload
-│   ├── models/          # Prisma schema (single source of truth)
-│   ├── routes/          # Express route definitions
-│   ├── services/        # Business logic (space, note, event, etc.)
-│   ├── utils/           # Helpers (token generation, date formatting)
-│   └── app.ts           # Express app setup
-├── prisma/
-│   ├── schema.prisma    # Data model
-│   └── migrations/      # Prisma migrations
+│   ├── models/           # User, Space, Note, Event, Preference, Memory
+│   ├── services/         # Business logic (consent, encryption, notifications)
+│   ├── routes/           # REST/GraphQL endpoints
+│   ├── middleware/       # Auth, rate limiting, error handling
+│   └── db/               # Migrations, connection pooling
 ├── tests/
-│   ├── contract/        # API contract tests
-│   ├── integration/     # Service integration tests
-│   └── unit/            # Unit tests
-├── package.json
-└── tsconfig.json
+│   ├── contract/         # API contract tests (OpenAPI compliance)
+│   ├── integration/      # End-to-end flows (space creation, note delivery)
+│   └── unit/             # Service/model tests
+└── config/               # Environment, secrets management
 
 mobile/
-├── app/                 # Expo Router file-based routing
-│   ├── (auth)/          # Auth screens (login, register)
-│   ├── (space)/         # Main space screens (notes, events, etc.)
-│   └── _layout.tsx      # Root layout with navigation
-├── components/          # Reusable UI components
-│   ├── notes/           # Note composition, reading
-│   ├── events/          # Event proposal, response
-│   ├── preferences/     # Preference expression
-│   ├── memories/        # Photo upload, album view
-│   └── shared/          # Buttons, cards, modals
-├── services/            # API client, auth, storage, notifications
-├── hooks/               # Custom React hooks
-├── stores/              # Local state (AsyncStorage, draft sync)
-├── constants/           # Theme, colors, notification config
-├── tests/               # Component and hook tests
-├── app.json             # Expo config
-├── package.json
-├── tailwind.config.js   # NativeWind config
-└── tsconfig.json
+├── shared/               # Platform-agnostic business logic
+│   ├── models/           # Data models matching API schemas
+│   ├── services/         # API client, local storage, sync engine
+│   └── utils/            # Encryption helpers, validation
+├── ios/                  # (if native)
+│   ├── Us/
+│   │   ├── Views/        # Onboarding, Space, Notes, Events, Memories
+│   │   ├── ViewModels/   # MVVM pattern
+│   │   └── Services/     # Platform-specific (push notifications)
+│   └── UsTests/
+├── android/              # (if native)
+│   └── [similar structure]
+└── react-native/         # (if cross-platform)
+    ├── src/
+    │   ├── screens/      # Navigation structure
+    │   ├── components/   # Reusable UI (NoteCard, EventProposal)
+    │   └── hooks/        # State management, API integration
+    └── __tests__/
+
+web/
+├── src/
+│   ├── pages/            # Next.js/SvelteKit routes or SPA pages
+│   ├── components/       # Shared UI components
+│   ├── lib/              # API client, auth helpers
+│   └── stores/           # Client-side state (if applicable)
+└── tests/
+    ├── e2e/              # Playwright/Cypress tests
+    └── unit/             # Component tests
+
+infra/
+├── docker/               # Local development environment
+├── terraform/            # Cloud infrastructure (if applicable)
+└── k8s/                  # Kubernetes manifests (if applicable)
 ```
 
-**Structure Decision**: Mobile + API structure selected. `backend/` contains the Express API with Prisma ORM. `mobile/` contains the React Native/Expo app using file-based routing (Expo Router) and NativeWind for styling. Separate `package.json` per workspace. Photos stored in S3-compatible object storage referenced by URL in PostgreSQL.
+**Structure Decision**: Mobile + Web + API architecture selected to support mobile-first requirement with web companion. API provides unified backend with strict access control. Mobile app(s) handle offline-first requirements with local draft storage. Shared mobile code reduces duplication between iOS/Android if native paths chosen. Web companion provides optional desktop access using same API.
 
 ## Complexity Tracking
 
-> No constitution violations detected. This section is intentionally empty.
+> **Fill ONLY if Constitution Check has violations that must be justified**
+
+**Status**: No violations requiring justification. All constitution checks passed or flagged for Phase 0 research verification.
