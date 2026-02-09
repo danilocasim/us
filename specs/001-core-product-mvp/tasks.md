@@ -26,14 +26,14 @@ Mobile + Web + API architecture:
 
 **Purpose**: Project initialization and basic structure per plan.md decisions
 
-- [ ] T001 Create monorepo structure with backend/, mobile/, and infra/ directories at repository root
-- [ ] T002 Initialize backend Node.js/TypeScript project with Express and Prisma dependencies in backend/
-- [ ] T003 Initialize mobile Expo/TypeScript project with Expo Router and NativeWind in mobile/
-- [ ] T004 [P] Configure ESLint and Prettier for backend/ with TypeScript rules
-- [ ] T005 [P] Configure ESLint and Prettier for mobile/ with React/TypeScript rules
-- [ ] T006 [P] Setup Docker Compose for local PostgreSQL 16 and MinIO in infra/docker/
-- [ ] T007 Create backend/.env.example with all required environment variables per quickstart.md
-- [ ] T008 Create mobile/.env.example with API_URL configuration per quickstart.md
+- [X] T001 Create monorepo structure with backend/, mobile/, and infra/ directories at repository root
+- [X] T002 Initialize backend Node.js/TypeScript project with Express and Prisma dependencies in backend/
+- [X] T003 Initialize mobile Expo/TypeScript project with Expo Router and NativeWind in mobile/
+- [X] T004 [P] Configure ESLint and Prettier for backend/ with TypeScript rules
+- [X] T005 [P] Configure ESLint and Prettier for mobile/ with React/TypeScript rules
+- [X] T006 [P] Setup Docker Compose for local PostgreSQL 16 and MinIO in infra/docker/
+- [X] T007 Create backend/.env.example with all required environment variables per quickstart.md
+- [X] T008 Create mobile/.env.example with API_URL configuration per quickstart.md
 
 ---
 
@@ -45,15 +45,15 @@ Mobile + Web + API architecture:
 
 ### Database & ORM
 
-- [ ] T009 Define Prisma schema with User, Space, SpaceMember entities in backend/prisma/schema.prisma per data-model.md
-- [ ] T010 [P] Add Invitation entity with token, expiresAt, status to Prisma schema
-- [ ] T011 [P] Add Note entity with title, body, status, deliveredAt to Prisma schema
-- [ ] T012 [P] Add Event and EventResponse entities to Prisma schema
-- [ ] T013 [P] Add Preference entity with category, content, isActive to Prisma schema
-- [ ] T014 [P] Add Memory and Reflection entities to Prisma schema
-- [ ] T015 [P] Add Notification entity with type, referenceId, isRead to Prisma schema
-- [ ] T016 Add indexes per data-model.md: User.email, SpaceMember(spaceId,userId), Invitation.token, etc.
-- [ ] T017 Generate Prisma client and create initial migration in backend/
+- [X] T009 Define Prisma schema with User, Space, SpaceMember entities in backend/prisma/schema.prisma per data-model.md
+- [X] T010 [P] Add Invitation entity with token, expiresAt, status to Prisma schema
+- [X] T011 [P] Add Note entity with title, body, status, deliveredAt to Prisma schema
+- [X] T012 [P] Add Event and EventResponse entities to Prisma schema
+- [X] T013 [P] Add Preference entity with category, content, isActive to Prisma schema
+- [X] T014 [P] Add Memory and Reflection entities to Prisma schema
+- [X] T015 [P] Add Notification entity with type, referenceId, isRead to Prisma schema
+- [X] T016 Add indexes per data-model.md: User.email, SpaceMember(spaceId,userId), Invitation.token, etc.
+- [X] T017 Generate Prisma client and create initial migration in backend/
 
 ### Authentication Infrastructure
 
