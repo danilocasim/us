@@ -1,0 +1,301 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ==========================================
+// User Entity
+// ==========================================
+model User {
+  id                     String         @id @default(uuid()) @db.Uuid
+  email                  String         @unique
+  passwordHash           String
+  displayName            String         @db.VarChar(50)
+  pushToken              String?
+  notificationsEnabled   Boolean        @default(true)
+  createdAt              DateTime       @default(now())
+  updatedAt              DateTime       @updatedAt
+  deletedAt              DateTime?
+
+  // Relations
+  spaceMembers           SpaceMember[]
+  invitations            Invitation[]
+  notes                  Note[]
+  events                 Event[]
+  eventResponses         EventResponse[]
+  preferences            Preference[]
+  memories               Memory[]
+  reflections            Reflection[]
+  notifications          Notification[]
+
+  @@map("users")
+}
+
+// ==========================================
+// Space Entity
+// ==========================================
+model Space {
+  id                     String         @id @default(uuid()) @db.Uuid
+  status                 SpaceStatus    @default(pending)
+  createdAt              DateTime       @default(now())
+  updatedAt              DateTime       @updatedAt
+  archivedAt             DateTime?
+
+  // Relations
+  members                SpaceMember[]
+  invitations            Invitation[]
+  notes                  Note[]
+  events                 Event[]
+  preferences            Preference[]
+  memories               Memory[]
+  notifications          Notification[]
+
+  @@map("spaces")
+}
+
+enum SpaceStatus {
+  pending
+  active
+  archived
+}
+
+// ==========================================
+// SpaceMember Entity
+// ==========================================
+model SpaceMember {
+  id                     String         @id @default(uuid()) @db.Uuid
+  spaceId                String         @db.Uuid
+  userId                 String         @db.Uuid
+  role                   SpaceMemberRole
+  joinedAt               DateTime       @default(now())
+
+  // Relations
+  space                  Space          @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  user                   User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([spaceId, userId])
+  @@map("space_members")
+}
+
+enum SpaceMemberRole {
+  owner
+  partner
+}
+
+// ==========================================
+// Invitation Entity (T010)
+// ==========================================
+model Invitation {
+  id                     String         @id @default(uuid()) @db.Uuid
+  spaceId                String         @db.Uuid
+  inviterId              String         @db.Uuid
+  token                  String         @unique
+  status                 InvitationStatus
+  expiresAt              DateTime
+  consumedAt             DateTime?
+  respondedAt            DateTime?
+  createdAt              DateTime       @default(now())
+
+  // Relations
+  space                  Space          @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  inviter                User           @relation(fields: [inviterId], references: [id], onDelete: Cascade)
+
+  @@index([expiresAt])
+  @@map("invitations")
+}
+
+enum InvitationStatus {
+  pending
+  accepted
+  declined
+  revoked
+  expired
+}
+
+// ==========================================
+// Note Entity (T011)
+// ==========================================
+model Note {
+  id                     String         @id @default(uuid()) @db.Uuid
+  spaceId                String         @db.Uuid
+  authorId               String         @db.Uuid
+  title                  String?        @db.VarChar(100)
+  body                   String         @db.VarChar(10000)
+  status                 NoteStatus
+  deliveredAt            DateTime?
+  readAt                 DateTime?
+  createdAt              DateTime       @default(now())
+  updatedAt              DateTime       @updatedAt
+
+  // Relations
+  space                  Space          @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  author                 User           @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([spaceId, status, createdAt])
+  @@map("notes")
+}
+
+enum NoteStatus {
+  draft
+  delivered
+}
+
+// ==========================================
+// Event Entity (T012)
+// ==========================================
+model Event {
+  id                     String         @id @default(uuid()) @db.Uuid
+  spaceId                String         @db.Uuid
+  proposerId             String         @db.Uuid
+  title                  String         @db.VarChar(100)
+  description            String?        @db.VarChar(2000)
+  eventDate              DateTime
+  location               String?        @db.VarChar(200)
+  status                 EventStatus
+  createdAt              DateTime       @default(now())
+  updatedAt              DateTime       @updatedAt
+
+  // Relations
+  space                  Space          @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  proposer               User           @relation(fields: [proposerId], references: [id], onDelete: Cascade)
+  responses              EventResponse[]
+
+  @@index([spaceId, status, eventDate])
+  @@map("events")
+}
+
+enum EventStatus {
+  proposed
+  agreed
+  declined
+  modified
+}
+
+// ==========================================
+// EventResponse Entity (T012)
+// ==========================================
+model EventResponse {
+  id                     String         @id @default(uuid()) @db.Uuid
+  eventId                String         @db.Uuid
+  responderId            String         @db.Uuid
+  type                   EventResponseType
+  message                String?        @db.VarChar(500)
+  createdAt              DateTime       @default(now())
+
+  // Relations
+  event                  Event          @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  responder              User           @relation(fields: [responderId], references: [id], onDelete: Cascade)
+
+  @@map("event_responses")
+}
+
+enum EventResponseType {
+  agree
+  decline
+  preference
+}
+
+// ==========================================
+// Preference Entity (T013)
+// ==========================================
+model Preference {
+  id                     String         @id @default(uuid()) @db.Uuid
+  spaceId                String         @db.Uuid
+  authorId               String         @db.Uuid
+  category               PreferenceCategory
+  content                String         @db.VarChar(500)
+  isActive               Boolean        @default(true)
+  createdAt              DateTime       @default(now())
+  updatedAt              DateTime       @updatedAt
+
+  // Relations
+  space                  Space          @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  author                 User           @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([spaceId, authorId, isActive])
+  @@map("preferences")
+}
+
+enum PreferenceCategory {
+  desire
+  mood
+  boundary
+}
+
+// ==========================================
+// Memory Entity (T014)
+// ==========================================
+model Memory {
+  id                     String         @id @default(uuid()) @db.Uuid
+  spaceId                String         @db.Uuid
+  uploaderId             String         @db.Uuid
+  photoUrl               String
+  photoKey               String
+  caption                String?        @db.VarChar(500)
+  memoryDate             DateTime?
+  createdAt              DateTime       @default(now())
+
+  // Relations
+  space                  Space          @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  uploader               User           @relation(fields: [uploaderId], references: [id], onDelete: Cascade)
+  reflections            Reflection[]
+
+  @@index([spaceId, createdAt])
+  @@map("memories")
+}
+
+// ==========================================
+// Reflection Entity (T014)
+// ==========================================
+model Reflection {
+  id                     String         @id @default(uuid()) @db.Uuid
+  memoryId               String         @db.Uuid
+  authorId               String         @db.Uuid
+  content                String         @db.VarChar(1000)
+  createdAt              DateTime       @default(now())
+
+  // Relations
+  memory                 Memory         @relation(fields: [memoryId], references: [id], onDelete: Cascade)
+  author                 User           @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@map("reflections")
+}
+
+// ==========================================
+// Notification Entity (T015)
+// ==========================================
+model Notification {
+  id                     String         @id @default(uuid()) @db.Uuid
+  recipientId            String         @db.Uuid
+  spaceId                String         @db.Uuid
+  type                   NotificationType
+  referenceId            String?        @db.Uuid
+  title                  String
+  body                   String
+  isRead                 Boolean        @default(false)
+  isPushed               Boolean        @default(false)
+  createdAt              DateTime       @default(now())
+
+  // Relations
+  recipient              User           @relation(fields: [recipientId], references: [id], onDelete: Cascade)
+  space                  Space          @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+
+  @@index([recipientId, isRead, createdAt])
+  @@map("notifications")
+}
+
+enum NotificationType {
+  note_delivered
+  event_proposed
+  event_responded
+  memory_added
+  partner_joined
+  partner_left
+}
