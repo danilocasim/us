@@ -1,63 +1,55 @@
 # Quickstart: Us Core Product MVP
 
-**Date**: 2026-02-09
+**Date**: 2026-02-15 (Updated)
 **Branch**: `001-core-product-mvp`
 
 ## Prerequisites
 
 - Node.js 20 LTS
-- PostgreSQL 16 (local or Docker)
+- Docker Desktop (for local Supabase)
+- Supabase CLI (`npm install -g supabase` or use `npx supabase`)
 - Expo CLI (`npm install -g expo-cli` or use `npx expo`)
 - iOS Simulator (macOS) or Android Emulator, or physical device with Expo Go
-- S3-compatible storage account (AWS S3, MinIO for local dev)
 
-## Backend Setup
-
-```bash
-# Navigate to backend
-cd backend
-
-# Install dependencies
-npm install
-
-# Copy environment template
-cp .env.example .env
-
-# Edit .env with your values:
-#   DATABASE_URL=postgresql://user:pass@localhost:5432/us_dev
-#   JWT_SECRET=your-secret-key
-#   JWT_REFRESH_SECRET=your-refresh-secret
-#   S3_BUCKET=us-photos-dev
-#   S3_REGION=us-east-1
-#   S3_ACCESS_KEY=your-key
-#   S3_SECRET_KEY=your-secret
-#   S3_ENDPOINT=http://localhost:9000  (for MinIO)
-#   APP_URL=https://us.app
-
-# Generate Prisma client and run migrations
-npx prisma generate
-npx prisma migrate dev
-
-# Start development server
-npm run dev
-# API available at http://localhost:3000
-```
-
-## Mobile Setup
+## Supabase Local Setup
 
 ```bash
-# Navigate to mobile app
+# Navigate to mobile directory
 cd mobile
 
 # Install dependencies
 npm install
 
+# Start local Supabase instance (requires Docker Desktop running)
+npx supabase start
+
+# Output will show:
+#   API URL: http://localhost:54321
+#   anon key: eyJh... (copy this)
+#   service_role key: eyJh... (keep secret)
+#   Studio URL: http://localhost:54323
+
+# Apply database migrations
+npx supabase db reset
+
+# Generate TypeScript types from schema
+npx supabase gen types typescript --local > src/types/database.types.ts
+```
+
+## Mobile App Setup
+
+```bash
+# Still in mobile/ directory
+
 # Copy environment template
 cp .env.example .env
 
-# Edit .env with your values:
-#   API_URL=http://localhost:3000/api/v1
-#   (Use your machine's IP instead of localhost for physical devices)
+# Edit .env with values from 'npx supabase start' output:
+#   EXPO_PUBLIC_SUPABASE_URL=http://localhost:54321
+#   EXPO_PUBLIC_SUPABASE_ANON_KEY=eyJh... (use the anon key from supabase start)
+#   EXPO_PUBLIC_INVITATION_EXPIRY_HOURS=168
+#   EXPO_PUBLIC_MAX_PHOTO_SIZE_MB=10
+#   EXPO_PUBLIC_MAX_PHOTOS_PER_SPACE=500
 
 # Start Expo development server
 npx expo start
@@ -66,80 +58,68 @@ npx expo start
 # Or scan QR code with Expo Go on a physical device
 ```
 
-## Local S3 (MinIO) for Development
+## Supabase Studio (Database Browser)
 
 ```bash
-# Run MinIO via Docker
-docker run -p 9000:9000 -p 9001:9001 \
-  -e MINIO_ROOT_USER=minioadmin \
-  -e MINIO_ROOT_PASSWORD=minioadmin \
-  minio/minio server /data --console-address ":9001"
+# Access Supabase Studio web UI at:
+open http://localhost:54323
 
-# Create the photos bucket via MinIO console at http://localhost:9001
-# Or use the AWS CLI:
-aws --endpoint-url http://localhost:9000 s3 mb s3://us-photos-dev
+# Browse tables, run SQL queries, view logs
+# Storage buckets visible under 'Storage' tab
 ```
 
 ## Running Tests
 
 ```bash
-# Backend tests
-cd backend
-npm test                    # All tests
-npm run test:unit           # Unit tests only
-npm run test:integration    # Integration tests only
-npm run test:contract       # Contract tests only
-
-# Mobile tests
+# Mobile tests (ensure Supabase local is running)
 cd mobile
-npm test                    # All tests
+npm test                    # All unit tests
+npm run test:watch          # Watch mode
+npm run test:coverage       # With coverage report
+npm run e2e:ios             # Detox E2E tests (iOS)
+npm run e2e:android         # Detox E2E tests (Android)
 ```
 
 ## Key Commands
 
-| Command | Location | Purpose |
-|---------|----------|---------|
-| `npm run dev` | backend/ | Start API server (hot reload) |
-| `npx expo start` | mobile/ | Start Expo dev server |
-| `npx prisma studio` | backend/ | Visual database browser |
-| `npx prisma migrate dev` | backend/ | Apply pending migrations |
-| `npx prisma migrate reset` | backend/ | Reset database (dev only) |
-| `npm test` | either | Run test suite |
+| Command                                     | Location | Purpose                                                  |
+| ------------------------------------------- | -------- | -------------------------------------------------------- |
+| `npx supabase start`                        | mobile/  | Start local Supabase (PostgreSQL, Auth, Storage, Studio) |
+| `npx supabase stop`                         | mobile/  | Stop local Supabase                                      |
+| `npx supabase db reset`                     | mobile/  | Reset database and reapply migrations                    |
+| `npx supabase gen types typescript --local` | mobile/  | Generate TypeScript types from schema                    |
+| `npx expo start`                            | mobile/  | Start Expo dev server                                    |
+| `npm test`                                  | mobile/  | Run unit tests                                           |
+| `npm run type-check`                        | mobile/  | Type check without emitting                              |
 
 ## Verification Checklist
 
 After setup, verify the following work end-to-end:
 
-1. Backend starts without errors on port 3000
-2. `POST /api/v1/auth/register` returns 201 with tokens
-3. `POST /api/v1/auth/login` returns 200 with tokens
-4. `POST /api/v1/spaces` creates a pending space with invitation link
-5. Mobile app launches and shows the auth screen
-6. Registration flow completes and redirects to main screen
-7. MinIO/S3 accepts uploads via presigned URL
+1. `npx supabase status` shows all services healthy (PostgreSQL, Auth, Storage, Studio)
+2. Supabase Studio accessible at http://localhost:54323
+3. Mobile app launches and shows auth/onboarding screen
+4. TypeScript compilation succeeds: `npm run type-check` (0 errors)
+5. Unit tests pass: `npm test`
+6. Can view database schema in Studio 'Table Editor' tab
+7. Storage bucket 'memories' exists in Studio 'Storage' tab
 
 ## Environment Variables Reference
 
-### Backend (.env)
-
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `DATABASE_URL` | Yes | PostgreSQL connection string |
-| `JWT_SECRET` | Yes | Access token signing secret |
-| `JWT_REFRESH_SECRET` | Yes | Refresh token signing secret |
-| `JWT_ACCESS_EXPIRY` | No | Access token TTL (default: 15m) |
-| `JWT_REFRESH_EXPIRY` | No | Refresh token TTL (default: 7d) |
-| `S3_BUCKET` | Yes | Photo storage bucket name |
-| `S3_REGION` | Yes | S3 region |
-| `S3_ACCESS_KEY` | Yes | S3 access key |
-| `S3_SECRET_KEY` | Yes | S3 secret key |
-| `S3_ENDPOINT` | No | Custom S3 endpoint (for MinIO) |
-| `APP_URL` | Yes | Public app URL (for invitation links) |
-| `PORT` | No | API port (default: 3000) |
-| `INVITE_EXPIRY_HOURS` | No | Invitation link TTL (default: 48) |
-
 ### Mobile (.env)
 
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `API_URL` | Yes | Backend API base URL |
+| Variable                              | Required | Description                                            |
+| ------------------------------------- | -------- | ------------------------------------------------------ |
+| `EXPO_PUBLIC_SUPABASE_URL`            | Yes      | Supabase API URL (local: http://localhost:54321)       |
+| `EXPO_PUBLIC_SUPABASE_ANON_KEY`       | Yes      | Supabase anonymous key (from `npx supabase start`)     |
+| `EXPO_PUBLIC_INVITATION_EXPIRY_HOURS` | No       | Invitation link TTL (default: 168 = 7 days per FR-030) |
+| `EXPO_PUBLIC_MAX_PHOTO_SIZE_MB`       | No       | Maximum photo upload size (default: 10)                |
+| `EXPO_PUBLIC_MAX_PHOTOS_PER_SPACE`    | No       | Maximum photos per relationship space (default: 500)   |
+| `EXPO_PUBLIC_ENABLE_ANALYTICS`        | No       | Enable analytics (default: false)                      |
+
+### Production (.env for Supabase Cloud)
+
+| Variable                        | Required | Description                                    |
+| ------------------------------- | -------- | ---------------------------------------------- |
+| `EXPO_PUBLIC_SUPABASE_URL`      | Yes      | Supabase project URL (https://xxx.supabase.co) |
+| `EXPO_PUBLIC_SUPABASE_ANON_KEY` | Yes      | Production anon key (from Supabase dashboard)  |

@@ -1,0 +1,29 @@
+/* global.css - NativeWind base styles for Us */
+
+/* Tailwind directives */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Reset and base styles */
+* {
+  box-sizing: border-box;
+}
+
+/* Custom utility classes for Us design language */
+.text-care {
+  @apply text-care;
+}
+
+.bg-care {
+  @apply bg-care;
+}
+
+.letter-spacing-calm {
+  letter-spacing: 0.025em;
+}
+
+/* Focus states for accessibility */
+.focus-visible {
+  @apply outline-none ring-2 ring-care ring-offset-2;
+}

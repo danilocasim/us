@@ -12,10 +12,18 @@
 - Q: What happens to shared content when one partner deletes their account? → A: Archive — departing user's content remains visible to the remaining partner as read-only; space becomes inactive.
 - Q: How does the invitation reach the other person? → A: Shareable link — the inviter generates a unique link and shares it via any channel they choose. The system does not need the partner's contact info upfront.
 - Q: Can users export their shared data? → A: Yes — either partner can independently export the full shared content (all notes, events, memories, etc.) without requiring the other's approval.
-- Q: How is the invitation link secured against misuse? → A: Single-use with expiration — the link becomes invalid after one person opens it and automatically expires after a set period (e.g., 48 hours).
+- Q: How is the invitation link secured against misuse? → A: Single-use with expiration — the link becomes invalid after one person opens it and automatically expires after 7 days.
 - Q: What are the availability and data recovery expectations? → A: High durability — no user content loss is acceptable under any circumstance; standard uptime expectations (no enterprise-grade SLA required).
 
-## User Scenarios & Testing *(mandatory)*
+### Session 2026-02-14
+
+- Q: Photo & File Storage Infrastructure → A: Supabase Storage - Built-in with Supabase platform, 1GB free tier, integrated auth & CDN, automatic image transformations. Simplifies MVP architecture.
+- Q: Backend Platform & Database → A: Full Supabase Platform - Integrated PostgreSQL, Auth, Storage, and Realtime. Free tier: 500MB DB, 2 cores CPU, row-level security built-in. Fastest MVP path.
+- Q: Mobile Platform Implementation → A: React Native with Expo - Single TypeScript codebase, excellent Supabase support, fast iteration. Expo simplifies builds and deployments. Best for MVP velocity.
+- Q: Photo Size & Upload Limits → A: 10MB per photo, max 500 photos per space - Balanced quality and quantity. Modern phone photos work well. Total capacity ~5GB (requires paid tier at scale, but realistic for MVP).
+- Q: Invitation Link Expiration Period → A: 7 days - Balances security with convenience. Accommodates asynchronous communication patterns without being overly permissive.
+
+## User Scenarios & Testing _(mandatory)_
 
 ### User Story 1 - Create a Private Relationship Space (Priority: P1)
 
@@ -127,11 +135,11 @@ A user receives a notification when something meaningful happens in the shared s
 
 - What happens when one partner deletes their account? The other partner MUST be notified. The departing user's content (notes, memories, reflections) MUST remain visible to the remaining partner in a read-only archived state. The space becomes inactive — no new content can be created, but the archive is preserved.
 - What happens when both partners are composing notes simultaneously? Each note is independent — there is no real-time chat dynamic.
-- What happens when an invitation link is shared with the wrong person? The link is single-use and expires automatically (e.g., 48 hours). If the wrong person opens it, the link is consumed and the inviter can generate a new one. The invited person MUST still explicitly consent; the inviter can also revoke a pending invitation before acceptance.
+- What happens when an invitation link is shared with the wrong person? The link is single-use and expires automatically after 7 days. If the wrong person opens it, the link is consumed and the inviter can generate a new one. The invited person MUST still explicitly consent; the inviter can also revoke a pending invitation before acceptance.
 - What happens when a user tries to access a space after their partner has left? The remaining user MUST retain access to their own contributions but MUST NOT be able to create new content in the space.
 - What happens when the system is unavailable? Drafts MUST be preserved locally and synced when connectivity resumes. No content loss is acceptable.
 
-## Requirements *(mandatory)*
+## Requirements _(mandatory)_
 
 ### Functional Requirements
 
@@ -141,7 +149,7 @@ A user receives a notification when something meaningful happens in the shared s
 - **FR-002**: System MUST support exactly one private relationship space per user pair — no multi-party spaces.
 - **FR-003**: System MUST allow either user to leave a space, with clear consequences communicated beforehand. When a user leaves or deletes their account, their content MUST remain visible to the remaining partner as a read-only archive.
 - **FR-004**: System MUST allow a user to revoke a pending invitation before the other party accepts.
-- **FR-030**: Invitation links MUST be single-use (invalid after one person opens it) and MUST expire automatically after a set period (e.g., 48 hours). The inviter can generate a new link if the previous one expires.
+- **FR-030**: Invitation links MUST be single-use (invalid after one person opens it) and MUST expire automatically after 7 days. The inviter can generate a new link if the previous one expires.
 
 **Notes & Letters**
 
@@ -163,10 +171,10 @@ A user receives a notification when something meaningful happens in the shared s
 
 **Memories & Photos**
 
-- **FR-014**: System MUST allow users to upload photos with contextual information (caption, date, reflection).
+- **FR-014**: System MUST allow users to upload photos with contextual information (caption, date, reflection). Photo size limit is 10MB per file.
 - **FR-015**: System MUST present memories in a curated, album-like format — not as a social feed.
 - **FR-016**: System MUST allow both partners to add reflections to shared memories.
-- **FR-017**: System MUST encourage selective curation over bulk uploads.
+- **FR-017**: System MUST encourage selective curation over bulk uploads. Each relationship space has a maximum of 500 photos.
 
 **Notifications**
 
@@ -203,15 +211,16 @@ A user receives a notification when something meaningful happens in the shared s
 
 ### Assumptions
 
-- Users register with an email address and password as the default authentication method.
-- The product is a mobile-first experience, with potential for a companion web interface.
+- The system uses the Supabase platform (PostgreSQL database, authentication, storage, and real-time subscriptions) as the integrated backend. Row-level security policies enforce relationship space isolation.
+- Users register with an email address and password as the default authentication method via Supabase Auth.
+- The mobile application is built with React Native and Expo (single TypeScript codebase for iOS and Android), with potential for a companion web interface.
 - Data is encrypted in transit and at rest as a baseline privacy measure.
 - Zero content loss is the durability target — all user content must be recoverable. Standard uptime expectations apply (no enterprise-grade SLA).
 - The system supports one active relationship space per user at a time; a user must leave a space before creating or joining another.
-- Photos are stored with reasonable size limits to encourage curation over volume.
+- Photos are stored using Supabase Storage with integrated CDN and automatic image transformations. Photo size is limited to 10MB per file, with a maximum of 500 photos per relationship space to encourage selective curation.
 - Notification delivery uses the platform's native push notification system.
 
-## Success Criteria *(mandatory)*
+## Success Criteria _(mandatory)_
 
 ### Measurable Outcomes
 

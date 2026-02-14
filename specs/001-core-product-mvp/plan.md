@@ -1,106 +1,141 @@
 # Implementation Plan: Us Core Product MVP
 
-**Branch**: `001-core-product-mvp` | **Date**: 2026-02-09 | **Spec**: [spec.md](./spec.md)
+**Branch**: `001-core-product-mvp` | **Date**: 2026-02-14 | **Spec**: [spec.md](spec.md)
 **Input**: Feature specification from `/specs/001-core-product-mvp/spec.md`
+
+**Note**: This template is filled in by the `/speckit.plan` command. See `.specify/templates/commands/plan.md` for the execution workflow.
 
 ## Summary
 
-Build a private, one-to-one relationship space where two consenting users can share intentional notes/letters, propose events, express preferences, and curate photo memories. The backend is a Node.js/Express API with Prisma ORM and PostgreSQL for durable storage. The frontend is a React Native mobile app styled with NativeWind (Tailwind for RN). Push notifications are delivered via Expo Notifications. The system enforces mutual consent, note permanence, privacy-by-default, and zero engagement exploitation at every layer.
+Us is a private, one-to-one digital space for notes, events, preferences, photos, and memories between two people. The MVP establishes the foundational relationship model with mutual consent, intentional communication through permanent notes, event planning, preference sharing, curated memories, and restrained notifications. Technical implementation uses React Native with Expo for cross-platform mobile delivery and Supabase (PostgreSQL, Auth, Storage, Realtime) as the integrated backend platform.
 
 ## Technical Context
 
-**Language/Version**: TypeScript 5.x (both frontend and backend)
-**Primary Dependencies**:
-- Backend: Node.js 20 LTS, Express 4.x, Prisma 5.x, bcrypt, jsonwebtoken, multer, expo-server-sdk
-- Frontend: React Native 0.76+, Expo SDK 52+, NativeWind 4.x, React Navigation 7.x, Expo Notifications, Expo Image Picker, AsyncStorage
-**Storage**: PostgreSQL 16 (primary), S3-compatible object store (photos)
-**Testing**: Jest + Supertest (backend), Jest + React Native Testing Library (frontend)
-**Target Platform**: iOS 15+ and Android 12+ (via React Native/Expo); API on Linux server
-**Project Type**: Mobile + API (frontend + backend)
-**Performance Goals**: API responses <500ms p95 for all endpoints; push notification delivery <30s from trigger event
-**Constraints**: Offline-capable drafts (local-first with sync); photo uploads capped at 10MB per image; zero user content loss
-**Scale/Scope**: Initial target 1,000 relationship spaces; ~10 screens in mobile app
+**Language/Version**: TypeScript 5.x (both mobile and backend integrations)  
+**Primary Dependencies**: React Native, Expo SDK, Supabase JS Client (@supabase/supabase-js), React Navigation  
+**Storage**: Supabase PostgreSQL (relational data), Supabase Storage (photos with CDN)  
+**Testing**: Jest + React Native Testing Library (unit/integration), Detox (E2E), Supabase local development  
+**Target Platform**: iOS 15+ and Android 10+ (React Native mobile apps via Expo)
+**Project Type**: Mobile application with cloud backend (Supabase)  
+**Performance Goals**: <500ms typical screen transitions, <2s photo upload (3MB typical), 60fps UI animations  
+**Constraints**: 10MB max per photo, 500 photos per relationship space, offline draft preservation, zero data loss on sync  
+**Scale/Scope**: MVP targets 100-1000 early users, ~15 screens, single relationship space per user, free-tier infrastructure (Supabase 500MB DB, 1GB storage)
 
 ## Constitution Check
 
-*GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
+_GATE: Must pass before Phase 0 research. Re-check after Phase 1 design._
 
-| # | Principle | Gate Question | Status |
-|---|-----------|---------------|--------|
-| I | Purpose & Scope | Does the feature enable one-to-one meaningful connection without maximizing engagement or becoming social? | PASS — all features serve a single private space between two people |
-| II | Trust & Consent | Does the feature require explicit consent and protect privacy, data ownership, and emotional safety? | PASS — invitation requires explicit acceptance; space requires mutual consent |
-| III | Privacy & Ownership | Is data treated as belonging to the relationship? No public discovery, no indexing, no sharing without user action? | PASS — all content scoped to relationship space; full export available; no public endpoints |
-| IV | Intentional Design | Does the feature encourage thoughtfulness? Is friction used to protect meaning? | PASS — note permanence enforced; memory curation encouraged; no real-time chat |
-| V | Simplicity & Restraint | Does every feature justify its existence with emotional value? No surface area without depth? | PASS — 6 user stories, each with clear human narrative and emotional purpose |
-| VI | Scalability Without Dehumanization | No dark patterns, engagement loops, or attention harvesting? | PASS — notifications are restrained; no streaks/gamification; FR-019 enforced |
-| VII | Maintainability & Longevity | Clarity over cleverness? Stability over novelty? Additive changes? | PASS — standard well-supported stack; Prisma migrations; TypeScript for clarity |
-| VIII | Accountability & Governance | Decisions documented, reversible where possible, understandable? | PASS — plan artifacts document all decisions; Prisma migrations are reversible |
-| IX | Ethical Boundaries | No monetization of vulnerability? No surveillance of intimacy? | PASS — analytics measure system health only (FR-028); no behavioral tracking |
-| X | Evolution & Adaptation | Changes preserve purpose, are explicit and reasoned? | PASS — constitution governance enforced via plan template gates |
+**Evaluation against Us Constitution v1.0.0**
 
-**Gate result**: ALL PASS — no violations. Complexity Tracking section not required.
+| Principle                                  | Status  | Evidence                                                                                                                               |
+| ------------------------------------------ | ------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| **I. Purpose & Scope**                     | ✅ PASS | Feature strictly enforces one-to-one relationship spaces (FR-002). No multi-party expansion, no social network features.               |
+| **II. Trust & Consent**                    | ✅ PASS | Mutual consent is mandatory (FR-001). Both parties must explicitly accept invitation before space becomes active.                      |
+| **III. Privacy & Ownership**               | ✅ PASS | No public discovery (FR-022, FR-023). Data belongs to relationship (FR-024). Export available to both partners independently (FR-029). |
+| **IV. Intentional Design**                 | ✅ PASS | Delivered notes are permanent (FR-006), creating intentional friction. Curated memories over bulk uploads (FR-017).                    |
+| **V. Simplicity & Restraint**              | ✅ PASS | Limited to 6 core user stories (P1-P6). Each feature has clear emotional purpose. No feature bloat.                                    |
+| **VI. Scalability Without Dehumanization** | ✅ PASS | No engagement metrics. No relationship comparison features (FR-026). Analytics measure system health only (FR-028).                    |
+| **VII. Maintainability & Longevity**       | ✅ PASS | Standard TypeScript stack. Well-documented APIs. Supabase provides stable, versioned platform.                                         |
+| **VIII. Accountability & Governance**      | ✅ PASS | All decisions documented in spec clarifications. Clear requirements traceability.                                                      |
+| **IX. Ethical Boundaries**                 | ✅ PASS | Zero dark patterns (FR-019, SC-008). No emotion monetization (FR-027). Privacy-first storage.                                          |
+| **X. Evolution & Adaptation**              | ✅ PASS | Clear migration path when user leaves (FR-003). Graceful archive behavior preserves trust.                                             |
+
+**Gate Status**: ✅ **PASS** — All constitution principles satisfied. No violations requiring justification.
+
+**Pre-Phase-0 Check**: ✅ CLEARED  
+**Post-Phase-1 Recheck**: ✅ CLEARED — Design phase completed. All principles remain satisfied. Supabase RLS policies enforce privacy requirements. React Native + Expo provide stable, maintainable foundation. No new violations introduced.
 
 ## Project Structure
 
 ### Documentation (this feature)
 
 ```text
-specs/001-core-product-mvp/
-├── plan.md              # This file
-├── research.md          # Phase 0 output
-├── data-model.md        # Phase 1 output
-├── quickstart.md        # Phase 1 output
-├── contracts/           # Phase 1 output
-│   └── api.md           # REST API contract
-└── tasks.md             # Phase 2 output (/speckit.tasks command)
+specs/[###-feature]/
+├── plan.md              # This file (/speckit.plan command output)
+├── research.md          # Phase 0 output (/speckit.plan command)
+├── data-model.md        # Phase 1 output (/speckit.plan command)
+├── quickstart.md        # Phase 1 output (/speckit.plan command)
+├── contracts/           # Phase 1 output (/speckit.plan command)
+└── tasks.md             # Phase 2 output (/speckit.tasks command - NOT created by /speckit.plan)
 ```
 
 ### Source Code (repository root)
 
 ```text
-backend/
-├── src/
-│   ├── config/          # Database, auth, storage, notification config
-│   ├── middleware/       # Auth, error handling, rate limiting, upload
-│   ├── models/          # Prisma schema (single source of truth)
-│   ├── routes/          # Express route definitions
-│   ├── services/        # Business logic (space, note, event, etc.)
-│   ├── utils/           # Helpers (token generation, date formatting)
-│   └── app.ts           # Express app setup
-├── prisma/
-│   ├── schema.prisma    # Data model
-│   └── migrations/      # Prisma migrations
-├── tests/
-│   ├── contract/        # API contract tests
-│   ├── integration/     # Service integration tests
-│   └── unit/            # Unit tests
-├── package.json
-└── tsconfig.json
-
 mobile/
-├── app/                 # Expo Router file-based routing
-│   ├── (auth)/          # Auth screens (login, register)
-│   ├── (space)/         # Main space screens (notes, events, etc.)
-│   └── _layout.tsx      # Root layout with navigation
-├── components/          # Reusable UI components
-│   ├── notes/           # Note composition, reading
-│   ├── events/          # Event proposal, response
-│   ├── preferences/     # Preference expression
-│   ├── memories/        # Photo upload, album view
-│   └── shared/          # Buttons, cards, modals
-├── services/            # API client, auth, storage, notifications
-├── hooks/               # Custom React hooks
-├── stores/              # Local state (AsyncStorage, draft sync)
-├── constants/           # Theme, colors, notification config
-├── tests/               # Component and hook tests
-├── app.json             # Expo config
+├── app/                      # Expo Router screens (file-based routing)
+│   ├── _layout.tsx           # Root layout with providers (AuthProvider, QueryClientProvider)
+│   ├── index.tsx             # Landing/redirect screen
+│   ├── (auth)/               # Auth route group (not in URL path)
+│   │   ├── _layout.tsx       # Auth layout
+│   │   ├── login.tsx         # Login screen
+│   │   ├── register.tsx      # Registration screen
+│   │   └── onboarding.tsx    # Post-registration onboarding
+│   └── (space)/              # Main app route group (requires auth)
+│       ├── _layout.tsx       # Tab navigator (Notes, Events, Memories, Preferences)
+│       ├── notes/
+│       │   ├── index.tsx     # Notes list
+│       │   ├── [id].tsx      # Note detail/read
+│       │   └── compose.tsx   # Compose note (modal)
+│       ├── events/
+│       │   ├── index.tsx     # Events list
+│       │   ├── [id].tsx      # Event detail
+│       │   └── create.tsx    # Create event
+│       ├── memories/
+│       │   ├── index.tsx     # Memory gallery
+│       │   ├── [id].tsx      # Memory detail
+│       │   └── upload.tsx    # Upload photo
+│       └── preferences/
+│           ├── index.tsx     # Preferences view
+│           └── create.tsx    # Add preference
+├── src/
+│   ├── components/           # Reusable UI components
+│   │   ├── Button.tsx
+│   │   ├── Input.tsx
+│   │   ├── Card.tsx
+│   │   └── ...
+│   ├── hooks/                # Custom React hooks
+│   │   ├── useAuth.ts        # Auth state and methods
+│   │   ├── useSpace.ts       # Active space data
+│   │   ├── useNotes.ts       # Notes queries and mutations
+│   │   ├── useDraft.ts       # Draft persistence
+│   │   └── ...
+│   ├── services/             # Supabase API calls
+│   │   ├── supabase.ts       # Supabase client setup
+│   │   ├── auth.service.ts   # Auth operations
+│   │   ├── space.service.ts  # Space operations
+│   │   ├── note.service.ts   # Note operations
+│   │   ├── event.service.ts  # Event operations
+│   │   ├── memory.service.ts # Memory/photo operations
+│   │   └── ...
+│   ├── types/                # TypeScript types
+│   │   ├── database.types.ts # Auto-generated from Supabase schema
+│   │   └── domain.types.ts   # Domain-specific types
+│   └── utils/                # Helper functions
+│       ├── validation.ts     # Input validation
+│       ├── formatting.ts     # Date/text formatting
+│       └── storage.ts        # AsyncStorage helpers
+├── supabase/
+│   ├── config.toml           # Supabase local config
+│   ├── migrations/           # Database migrations (SQL)
+│   │   └── 20260214000000_initial_schema.sql
+│   └── seed.sql              # Test data
+├── tests/
+│   ├── unit/                 # Jest unit tests
+│   ├── integration/          # Integration tests with local Supabase
+│   └── e2e/                  # Detox E2E tests
+├── .env                      # Environment variables (gitignored)
+├── .env.example              # Environment template
+├── app.json                  # Expo configuration
+├── tailwind.config.js        # NativeWind/Tailwind config
+├── global.css                # Global styles
 ├── package.json
-├── tailwind.config.js   # NativeWind config
-└── tsconfig.json
+├── tsconfig.json
+└── README.md
 ```
 
-**Structure Decision**: Mobile + API structure selected. `backend/` contains the Express API with Prisma ORM. `mobile/` contains the React Native/Expo app using file-based routing (Expo Router) and NativeWind for styling. Separate `package.json` per workspace. Photos stored in S3-compatible object storage referenced by URL in PostgreSQL.
+**Structure Decision**: Mobile + Cloud Backend (Supabase) architecture. Expo Router provides file-based routing with layout groups for clean auth/main app separation. Supabase directory contains database migrations and seeds for local development. All business logic in `src/services/`, keeping screens thin and focused on presentation.
 
 ## Complexity Tracking
 
-> No constitution violations detected. This section is intentionally empty.
+**No violations found**. All architecture decisions align with constitution principles. No complexity justification required.

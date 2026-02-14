@@ -1,6 +1,20 @@
 # API Contract: Us Core Product MVP
 
-**Base URL**: `/api/v1`
+> **⚠️ DEPRECATED**: This API contract document was created during initial planning but was superseded by the decision to use Supabase JS client directly (see [research.md](research.md) Section 1). The mobile app communicates with Supabase PostgreSQL, Auth, Storage, and Realtime services via `@supabase/supabase-js` client library, not through a custom REST API backend.
+>
+> **For actual data operations**, see:
+>
+> - Database schema: [data-model.md](data-model.md)
+> - Supabase services: `mobile/src/services/`
+> - Type definitions: `mobile/src/types/database.types.ts` (auto-generated)
+>
+> This document is retained for historical reference only.
+
+---
+
+# Historical API Contract (Not Implemented)
+
+**Base URL**: `/api/v1` _(Not used - Supabase direct client used instead)_
 **Auth**: Bearer JWT (access token) on all endpoints except auth routes
 **Content-Type**: `application/json` (unless multipart for uploads)
 **Date**: 2026-02-09
@@ -12,6 +26,7 @@
 Create a new user account.
 
 **Request**:
+
 ```json
 {
   "email": "user@example.com",
@@ -21,6 +36,7 @@ Create a new user account.
 ```
 
 **Response** `201 Created`:
+
 ```json
 {
   "user": {
@@ -43,6 +59,7 @@ Create a new user account.
 Authenticate and receive tokens.
 
 **Request**:
+
 ```json
 {
   "email": "user@example.com",
@@ -51,6 +68,7 @@ Authenticate and receive tokens.
 ```
 
 **Response** `200 OK`:
+
 ```json
 {
   "user": {
@@ -72,6 +90,7 @@ Authenticate and receive tokens.
 Refresh an expired access token.
 
 **Request**:
+
 ```json
 {
   "refreshToken": "jwt-refresh-token"
@@ -79,6 +98,7 @@ Refresh an expired access token.
 ```
 
 **Response** `200 OK`:
+
 ```json
 {
   "accessToken": "jwt-access-token",
@@ -97,6 +117,7 @@ Refresh an expired access token.
 Get the authenticated user's profile.
 
 **Response** `200 OK`:
+
 ```json
 {
   "id": "uuid",
@@ -115,6 +136,7 @@ Get the authenticated user's profile.
 Update user profile or notification preferences.
 
 **Request**:
+
 ```json
 {
   "displayName": "Alex Updated",
@@ -131,6 +153,7 @@ Update user profile or notification preferences.
 Register or update the Expo push notification token.
 
 **Request**:
+
 ```json
 {
   "pushToken": "ExponentPushToken[xxxxx]"
@@ -158,11 +181,13 @@ Soft-delete the user account. Archives any active space.
 Create a new relationship space (status: pending) and generate an invitation.
 
 **Request**:
+
 ```json
 {}
 ```
 
 **Response** `201 Created`:
+
 ```json
 {
   "space": {
@@ -189,6 +214,7 @@ Create a new relationship space (status: pending) and generate an invitation.
 Get the authenticated user's current active or archived space.
 
 **Response** `200 OK`:
+
 ```json
 {
   "id": "uuid",
@@ -220,6 +246,7 @@ Leave the current space. Space transitions to archived.
 Export all content from the current space.
 
 **Response** `200 OK`:
+
 ```json
 {
   "exportUrl": "https://s3.example.com/exports/uuid.json",
@@ -238,6 +265,7 @@ Export all content from the current space.
 Get the current pending invitation for the user's pending space.
 
 **Response** `200 OK`:
+
 ```json
 {
   "id": "uuid",
@@ -258,6 +286,7 @@ Get the current pending invitation for the user's pending space.
 Revoke the current pending invitation and generate a new one.
 
 **Response** `201 Created`:
+
 ```json
 {
   "id": "uuid",
@@ -285,6 +314,7 @@ Revoke the current pending invitation and cancel the pending space.
 View invitation details before accepting (public — no auth required).
 
 **Response** `200 OK`:
+
 ```json
 {
   "inviterDisplayName": "Alex",
@@ -303,11 +333,13 @@ View invitation details before accepting (public — no auth required).
 Accept the invitation and join the space (auth required — accepting user must be logged in).
 
 **Request**:
+
 ```json
 {}
 ```
 
 **Response** `200 OK`:
+
 ```json
 {
   "space": {
@@ -346,6 +378,7 @@ List all delivered notes in the current space, newest first.
 **Query params**: `?cursor=uuid&limit=20`
 
 **Response** `200 OK`:
+
 ```json
 {
   "notes": [
@@ -371,6 +404,7 @@ List all delivered notes in the current space, newest first.
 List the authenticated user's drafts.
 
 **Response** `200 OK`:
+
 ```json
 {
   "drafts": [
@@ -393,6 +427,7 @@ List the authenticated user's drafts.
 Create a new note (draft or deliver immediately).
 
 **Request**:
+
 ```json
 {
   "title": "For you",
@@ -412,6 +447,7 @@ Create a new note (draft or deliver immediately).
 Update a draft note (only if status is `draft`).
 
 **Request**:
+
 ```json
 {
   "title": "Updated title",
@@ -430,6 +466,7 @@ Update a draft note (only if status is `draft`).
 Deliver a draft note. Transitions to immutable.
 
 **Response** `200 OK`:
+
 ```json
 {
   "id": "uuid",
@@ -473,6 +510,7 @@ List events in the current space.
 **Query params**: `?status=proposed,agreed&cursor=uuid&limit=20`
 
 **Response** `200 OK`:
+
 ```json
 {
   "events": [
@@ -500,6 +538,7 @@ List events in the current space.
 Create a new event proposal.
 
 **Request**:
+
 ```json
 {
   "title": "Dinner at our favorite place",
@@ -520,6 +559,7 @@ Create a new event proposal.
 Update an event (only by proposer, only if `proposed` or `modified`).
 
 **Request**:
+
 ```json
 {
   "title": "Updated dinner plan",
@@ -538,6 +578,7 @@ Update an event (only by proposer, only if `proposed` or `modified`).
 Respond to an event proposal.
 
 **Request**:
+
 ```json
 {
   "type": "agree",
@@ -546,6 +587,7 @@ Respond to an event proposal.
 ```
 
 Or for a preference:
+
 ```json
 {
   "type": "preference",
@@ -570,6 +612,7 @@ List active preferences in the current space.
 **Query params**: `?authorId=uuid`
 
 **Response** `200 OK`:
+
 ```json
 {
   "preferences": [
@@ -593,6 +636,7 @@ List active preferences in the current space.
 Create a new preference.
 
 **Request**:
+
 ```json
 {
   "category": "desire",
@@ -611,6 +655,7 @@ Create a new preference.
 Update a preference (silent — no partner notification).
 
 **Request**:
+
 ```json
 {
   "content": "Actually, I'm in the mood for sushi"
@@ -642,6 +687,7 @@ List memories in the current space, newest first.
 **Query params**: `?cursor=uuid&limit=20`
 
 **Response** `200 OK`:
+
 ```json
 {
   "memories": [
@@ -675,6 +721,7 @@ List memories in the current space, newest first.
 Get a presigned S3 upload URL for a photo.
 
 **Request**:
+
 ```json
 {
   "contentType": "image/jpeg",
@@ -683,6 +730,7 @@ Get a presigned S3 upload URL for a photo.
 ```
 
 **Response** `200 OK`:
+
 ```json
 {
   "uploadUrl": "https://s3.example.com/presigned-upload-url",
@@ -700,6 +748,7 @@ Get a presigned S3 upload URL for a photo.
 Create a memory entry after the photo has been uploaded to S3.
 
 **Request**:
+
 ```json
 {
   "photoKey": "photos/uuid.jpg",
@@ -721,6 +770,7 @@ Create a memory entry after the photo has been uploaded to S3.
 Add a reflection to a memory.
 
 **Request**:
+
 ```json
 {
   "content": "I remember this so clearly"
@@ -740,6 +790,7 @@ List notifications for the authenticated user.
 **Query params**: `?unreadOnly=true&cursor=uuid&limit=20`
 
 **Response** `200 OK`:
+
 ```json
 {
   "notifications": [
@@ -764,6 +815,7 @@ List notifications for the authenticated user.
 Mark notifications as read.
 
 **Request**:
+
 ```json
 {
   "notificationIds": ["uuid1", "uuid2"]
@@ -789,6 +841,7 @@ All errors follow this structure:
 ```
 
 **Standard error codes**:
+
 - `VALIDATION_ERROR` (422)
 - `UNAUTHORIZED` (401)
 - `FORBIDDEN` (403)
